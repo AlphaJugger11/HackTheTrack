@@ -210,3 +210,6 @@ __marimo__/
 dataset/
 dataset/*.zip
 
+#kiro
+.kiro/
+.kiro
