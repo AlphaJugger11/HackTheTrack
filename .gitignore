@@ -213,3 +213,15 @@ dataset/*.zip
 #kiro
 .kiro/
 .kiro
+
+# Backend specific
+backend.log
+backend/*.log
+backend/venv/
+backend/__pycache__/
+
+# Frontend specific (for when we build it)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.log
