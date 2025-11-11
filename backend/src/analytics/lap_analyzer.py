@@ -251,3 +251,50 @@ class LapAnalyzer:
                     }
         
         return analysis
+
+    @staticmethod
+    def analyze_lap_times(driver_laps: pd.DataFrame) -> Dict:
+        """
+        Comprehensive lap time analysis for a driver.
+        
+        Args:
+            driver_laps: DataFrame with all laps for a driver
+            
+        Returns:
+            Dictionary with complete analysis
+        """
+        if driver_laps.empty:
+            return {}
+        
+        lap_time_col = ' LAP_TIME' if ' LAP_TIME' in driver_laps.columns else 'LAP_TIME'
+        
+        # Get basic stats
+        best_lap = LapAnalyzer.find_best_lap(driver_laps)
+        sector_analysis = LapAnalyzer.get_sector_analysis(driver_laps)
+        trend = LapAnalyzer.calculate_lap_time_trend(driver_laps)
+        
+        # Calculate consistency
+        lap_times = driver_laps[lap_time_col].dropna().tolist()
+        pit_laps = [False] * len(lap_times)
+        if 'is_pit_lap' in driver_laps.columns:
+            pit_laps = driver_laps['is_pit_lap'].fillna(False).tolist()
+        
+        consistency = LapAnalyzer.calculate_consistency_score(lap_times, pit_laps)
+        
+        # Combine all analysis
+        analysis = {
+            'best_lap': best_lap,
+            'sector_analysis': sector_analysis,
+            'trend': trend,
+            'consistency_score': consistency,
+            'total_laps': len(driver_laps),
+            'average_lap_time': float(driver_laps[lap_time_col].mean()) if lap_time_col in driver_laps.columns else None
+        }
+        
+        # Flatten sector analysis for easier access
+        for sector_key, sector_data in sector_analysis.items():
+            if isinstance(sector_data, dict):
+                for stat_key, stat_value in sector_data.items():
+                    analysis[f'{sector_key}_{stat_key}'] = stat_value
+        
+        return analysis

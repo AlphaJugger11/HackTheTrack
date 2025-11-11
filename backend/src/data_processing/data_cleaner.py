@@ -74,6 +74,39 @@ class DataCleaner:
         return df
 
     @staticmethod
+    def convert_lap_time_to_seconds(time_str):
+        """
+        Convert lap time string (M:SS.mmm or SS.mmm) to total seconds.
+        
+        Args:
+            time_str: Time string in format "M:SS.mmm" or "SS.mmm"
+            
+        Returns:
+            Float representing total seconds, or NaN if invalid
+        """
+        if pd.isna(time_str):
+            return np.nan
+        
+        try:
+            # If already a number, return it
+            if isinstance(time_str, (int, float)):
+                return float(time_str)
+            
+            time_str = str(time_str).strip()
+            
+            # Handle M:SS.mmm format
+            if ':' in time_str:
+                parts = time_str.split(':')
+                minutes = float(parts[0])
+                seconds = float(parts[1])
+                return minutes * 60 + seconds
+            else:
+                # Handle SS.mmm format
+                return float(time_str)
+        except (ValueError, AttributeError, IndexError):
+            return np.nan
+
+    @staticmethod
     def clean_lap_data(df: pd.DataFrame) -> pd.DataFrame:
         """
         Clean lap timing data with documented preprocessing decisions.
@@ -90,6 +123,17 @@ class DataCleaner:
             return df
         
         df = df.copy()
+        
+        # Convert lap time strings to seconds
+        lap_time_col = ' LAP_TIME' if ' LAP_TIME' in df.columns else 'LAP_TIME'
+        if lap_time_col in df.columns:
+            df[lap_time_col] = df[lap_time_col].apply(DataCleaner.convert_lap_time_to_seconds)
+        
+        # Convert sector times to seconds
+        for sector in ['S1_SECONDS', 'S2_SECONDS', 'S3_SECONDS']:
+            sector_col = f' {sector}' if f' {sector}' in df.columns else sector
+            if sector_col in df.columns:
+                df[sector_col] = df[sector_col].apply(DataCleaner.convert_lap_time_to_seconds)
         
         # Fix invalid lap numbers (Decision #3)
         df = DataCleaner.fix_invalid_lap_numbers(df)

@@ -213,6 +213,9 @@ dataset/*.zip
 #kiro
 .kiro/
 .kiro
+# But keep specs for documentation
+!.kiro/specs/
+!.kiro/steering/
 
 # Backend specific
 backend.log
@@ -225,3 +228,17 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 frontend/*.log
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# OS specific
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE specific
+*.code-workspace
+.idea/

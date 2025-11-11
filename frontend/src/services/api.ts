@@ -44,11 +44,22 @@ export const raceApi = {
     return response.data;
   },
 
+  async getAnalytics(
+    track: string,
+    raceNum: number,
+    driver: string
+  ): Promise<any> {
+    const response = await api.get(
+      `/api/races/${track}/${raceNum}/analytics/${driver}`
+    );
+    return response.data;
+  },
+
   async getStrategy(
     track: string,
     raceNum: number,
     driver: string,
-    currentLap: number
+    currentLap: number = 1
   ): Promise<StrategyRecommendation> {
     const response = await api.get<StrategyRecommendation>(
       `/api/races/${track}/${raceNum}/strategy`,

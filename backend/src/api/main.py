@@ -163,8 +163,48 @@ async def get_weather_data(track: str, race_num: int):
     
     return weather.to_dict('records')
 
+@app.get("/api/races/{track}/{race_num}/analytics/{driver}")
+async def get_driver_analytics(track: str, race_num: int, driver: str):
+    """Get analytics data for specific driver."""
+    try:
+        lap_data = dataset_manager.load_lap_data(track, race_num)
+        if lap_data is None:
+            raise HTTPException(status_code=404, detail="Lap data not found")
+        
+        cleaned_data = data_cleaner.clean_lap_data(lap_data)
+        
+        # Try both string and numeric comparison for driver number
+        driver_laps = cleaned_data[cleaned_data['NUMBER'].astype(str) == str(driver)]
+        if driver_laps.empty:
+            try:
+                driver_laps = cleaned_data[cleaned_data['NUMBER'] == int(driver)]
+            except:
+                pass
+        
+        if driver_laps.empty:
+            available_drivers = cleaned_data['NUMBER'].unique().tolist()
+            raise HTTPException(
+                status_code=404, 
+                detail=f"No data found for driver {driver}. Available drivers: {available_drivers}"
+            )
+        
+        # Analyze lap times
+        analysis = lap_analyzer.analyze_lap_times(driver_laps)
+        
+        # Replace NaN with None for JSON serialization
+        for key, value in analysis.items():
+            if isinstance(value, float) and pd.isna(value):
+                analysis[key] = None
+        
+        return analysis
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating analytics for {track} Race {race_num} Driver {driver}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/races/{track}/{race_num}/strategy")
-async def get_strategy_recommendation(track: str, race_num: int, driver: str, current_lap: int):
+async def get_strategy_recommendation(track: str, race_num: int, driver: str, current_lap: int = 1):
     """Get strategy recommendation for driver."""
     try:
         lap_data = dataset_manager.load_lap_data(track, race_num)
@@ -189,11 +229,6 @@ async def get_strategy_recommendation(track: str, race_num: int, driver: str, cu
                 detail=f"No data found for driver {driver}. Available drivers: {available_drivers}"
             )
         
-        # Convert lap times to numeric
-        lap_time_col = ' LAP_TIME' if ' LAP_TIME' in driver_laps.columns else 'LAP_TIME'
-        if lap_time_col in driver_laps.columns:
-            driver_laps[lap_time_col] = pd.to_numeric(driver_laps[lap_time_col], errors='coerce')
-        
         total_laps = cleaned_data[' LAP_NUMBER'].max() if ' LAP_NUMBER' in cleaned_data.columns else cleaned_data['LAP_NUMBER'].max()
         
         position = 1
@@ -201,6 +236,11 @@ async def get_strategy_recommendation(track: str, race_num: int, driver: str, cu
         strategy = strategy_engine.generate_strategy_recommendation(
             driver, current_lap, int(total_laps), driver_laps, position
         )
+        
+        # Replace NaN with None for JSON serialization
+        for key, value in strategy.items():
+            if isinstance(value, float) and pd.isna(value):
+                strategy[key] = None
         
         return strategy
     except HTTPException:
