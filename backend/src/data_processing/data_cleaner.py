@@ -22,15 +22,28 @@ class DataCleaner:
         See docs/data_preprocessing_decisions.md sections 1, 2, and 6 for justification.
         
         Args:
-            df: Raw telemetry DataFrame
+            df: Raw telemetry DataFrame (can be in long or wide format)
             
         Returns:
-            Cleaned telemetry DataFrame
+            Cleaned telemetry DataFrame in wide format
         """
         if df is None or df.empty:
             return df
         
         df = df.copy()
+        
+        # Check if data is in long format (telemetry_name, telemetry_value columns)
+        if 'telemetry_name' in df.columns and 'telemetry_value' in df.columns:
+            # Pivot from long to wide format
+            df = df.pivot_table(
+                index=['timestamp', 'lap'],
+                columns='telemetry_name',
+                values='telemetry_value',
+                aggfunc='first'
+            ).reset_index()
+            
+            # Flatten column names
+            df.columns.name = None
         
         # Remove duplicate timestamps (Decision #6)
         # Justification: Duplicates are logging artifacts, first occurrence is most accurate

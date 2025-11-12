@@ -5,6 +5,8 @@ import { RaceSelector } from "./RaceSelector";
 import { LapTimeChart } from "./LapTimeChart";
 import { SectorComparisonChart } from "./SectorComparisonChart";
 import { StrategyPanel } from "./StrategyPanel";
+import { TelemetryDashboard } from "./TelemetryDashboard";
+import { LapSelector } from "./LapSelector";
 import type { LapData } from "../types/race.types";
 
 export function Dashboard() {
@@ -15,7 +17,12 @@ export function Dashboard() {
 
   useEffect(() => {
     if (state.track && state.raceNum) {
-      loadRaceData();
+      // Debounce race data loading to avoid multiple rapid calls
+      const timer = setTimeout(() => {
+        loadRaceData();
+      }, 300);
+
+      return () => clearTimeout(timer);
     }
   }, [state.track, state.raceNum]);
 
@@ -172,6 +179,34 @@ export function Dashboard() {
                     ))}
                   </div>
                 </div>
+
+                {/* Lap Selector - Only show when driver selected */}
+                {state.selectedDriver && lapData.length > 0 && (
+                  <LapSelector
+                    totalLaps={Math.max(
+                      ...lapData.map(
+                        (l) =>
+                          l.LAP_NUMBER || l[" LAP_NUMBER" as keyof LapData] || 0
+                      )
+                    )}
+                  />
+                )}
+
+                {/* Telemetry Dashboard - Only show when driver selected */}
+                {state.selectedDriver && (
+                  <div className="bg-racing-gray p-6 rounded-lg">
+                    <h3 className="text-xl font-semibold mb-4">
+                      Telemetry Analysis - #{state.selectedDriver} - Lap{" "}
+                      {state.currentLap || 1}
+                    </h3>
+                    <TelemetryDashboard
+                      track={state.track!}
+                      raceNum={state.raceNum!}
+                      driver={state.selectedDriver}
+                      currentLap={state.currentLap || 1}
+                    />
+                  </div>
+                )}
 
                 {/* Lap Time Chart */}
                 <div className="bg-racing-gray p-6 rounded-lg">

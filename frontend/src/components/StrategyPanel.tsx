@@ -42,6 +42,7 @@ export function StrategyPanel({ track, raceNum, driver }: StrategyPanelProps) {
       setStrategy(data);
     } catch (error) {
       console.error("Failed to load strategy:", error);
+      setStrategy(null); // Clear data on error
     } finally {
       setLoading(false);
     }

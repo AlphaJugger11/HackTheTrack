@@ -58,6 +58,7 @@ export function SectorComparisonChart({
       setSectorData(sectors);
     } catch (error) {
       console.error("Failed to load sector data:", error);
+      setSectorData([]); // Clear data on error
     } finally {
       setLoading(false);
     }

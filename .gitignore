@@ -242,3 +242,7 @@ Thumbs.db
 # IDE specific
 *.code-workspace
 .idea/
+
+
+nextPrompt.md
+docs/session_summary.md
