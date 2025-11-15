@@ -7,7 +7,7 @@ DATASET_DIR = BASE_DIR / "dataset"
 API_HOST = "0.0.0.0"
 API_PORT = 8000
 
-CACHE_MAX_SIZE_MB = 500
+CACHE_MAX_SIZE_MB = 500  # Optimized for 8GB RAM systems
 
 TRACKS = [
     "barber",
