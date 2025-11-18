@@ -211,8 +211,8 @@ dataset/
 dataset/*.zip
 
 #kiro
-.kiro/
-.kiro
+#.kiro/
+#.kiro          # removed to add .kiro files to git for usage in other places
 # But keep specs for documentation
 !.kiro/specs/
 !.kiro/steering/
