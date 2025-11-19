@@ -178,13 +178,8 @@ async def get_driver_analytics(track: str, race_num: int, driver: str):
         
         cleaned_data = data_cleaner.clean_lap_data(lap_data)
         
-        # Try both string and numeric comparison for driver number
-        driver_laps = cleaned_data[cleaned_data['NUMBER'].astype(str) == str(driver)]
-        if driver_laps.empty:
-            try:
-                driver_laps = cleaned_data[cleaned_data['NUMBER'] == int(driver)]
-            except:
-                pass
+        # Driver numbers are now standardized as strings in DataCleaner
+        driver_laps = cleaned_data[cleaned_data['NUMBER'] == str(driver)]
         
         if driver_laps.empty:
             available_drivers = cleaned_data['NUMBER'].unique().tolist()
@@ -218,14 +213,8 @@ async def get_strategy_recommendation(track: str, race_num: int, driver: str, cu
         
         cleaned_data = data_cleaner.clean_lap_data(lap_data)
         
-        # Try both string and numeric comparison for driver number
-        driver_laps = cleaned_data[cleaned_data['NUMBER'].astype(str) == str(driver)]
-        if driver_laps.empty:
-            # Try numeric comparison
-            try:
-                driver_laps = cleaned_data[cleaned_data['NUMBER'] == int(driver)]
-            except:
-                pass
+        # Driver numbers are now standardized as strings in DataCleaner
+        driver_laps = cleaned_data[cleaned_data['NUMBER'] == str(driver)]
         
         if driver_laps.empty:
             available_drivers = cleaned_data['NUMBER'].unique().tolist()
@@ -234,7 +223,7 @@ async def get_strategy_recommendation(track: str, race_num: int, driver: str, cu
                 detail=f"No data found for driver {driver}. Available drivers: {available_drivers}"
             )
         
-        total_laps = cleaned_data[' LAP_NUMBER'].max() if ' LAP_NUMBER' in cleaned_data.columns else cleaned_data['LAP_NUMBER'].max()
+        total_laps = cleaned_data['LAP_NUMBER'].max()
         
         position = 1
         

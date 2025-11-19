@@ -115,7 +115,7 @@ class RaceSimulator:
         state['is_playing'] = True
         
         # Get total laps
-        lap_col = ' LAP_NUMBER' if ' LAP_NUMBER' in cleaned_data.columns else 'LAP_NUMBER'
+        lap_col = 'LAP_NUMBER'
         total_laps = int(cleaned_data[lap_col].max())
         
         await websocket.send_json({
@@ -133,7 +133,7 @@ class RaceSimulator:
         if state['lap_data'] is None:
             return
         
-        lap_col = ' LAP_NUMBER' if ' LAP_NUMBER' in state['lap_data'].columns else 'LAP_NUMBER'
+        lap_col = 'LAP_NUMBER'
         total_laps = int(state['lap_data'][lap_col].max())
         
         while state['is_playing'] and state['current_lap'] <= total_laps:
@@ -153,7 +153,7 @@ class RaceSimulator:
         lap_data = state['lap_data']
         current_lap = state['current_lap']
         
-        lap_col = ' LAP_NUMBER' if ' LAP_NUMBER' in lap_data.columns else 'LAP_NUMBER'
+        lap_col = 'LAP_NUMBER'
         
         # Get data for current lap
         lap_info = lap_data[lap_data[lap_col] == current_lap]

@@ -137,16 +137,22 @@ class DataCleaner:
         
         df = df.copy()
         
+        # Strip whitespace from column names for consistency
+        df.columns = df.columns.str.strip()
+        
+        # Standardize driver numbers as strings
+        if 'NUMBER' in df.columns:
+            df['NUMBER'] = df['NUMBER'].astype(str).str.strip()
+        
         # Convert lap time strings to seconds
-        lap_time_col = ' LAP_TIME' if ' LAP_TIME' in df.columns else 'LAP_TIME'
+        lap_time_col = 'LAP_TIME'
         if lap_time_col in df.columns:
             df[lap_time_col] = df[lap_time_col].apply(DataCleaner.convert_lap_time_to_seconds)
         
         # Convert sector times to seconds
         for sector in ['S1_SECONDS', 'S2_SECONDS', 'S3_SECONDS']:
-            sector_col = f' {sector}' if f' {sector}' in df.columns else sector
-            if sector_col in df.columns:
-                df[sector_col] = df[sector_col].apply(DataCleaner.convert_lap_time_to_seconds)
+            if sector in df.columns:
+                df[sector] = df[sector].apply(DataCleaner.convert_lap_time_to_seconds)
         
         # Fix invalid lap numbers (Decision #3)
         df = DataCleaner.fix_invalid_lap_numbers(df)
@@ -175,10 +181,10 @@ class DataCleaner:
         Returns:
             DataFrame with corrected lap numbers
         """
-        if ' LAP_NUMBER' not in df.columns and 'LAP_NUMBER' not in df.columns:
+        if 'LAP_NUMBER' not in df.columns:
             return df
         
-        lap_col = ' LAP_NUMBER' if ' LAP_NUMBER' in df.columns else 'LAP_NUMBER'
+        lap_col = 'LAP_NUMBER'
         
         # Count invalid lap numbers
         invalid_count = (df[lap_col] == INVALID_LAP_NUMBER).sum()
@@ -187,8 +193,8 @@ class DataCleaner:
             logger.warning(f"Found {invalid_count} invalid lap numbers (32768), recalculating from timestamps")
             
             # Group by driver and sort by timestamp
-            if 'NUMBER' in df.columns and ' ELAPSED' in df.columns:
-                df = df.sort_values([' ELAPSED'])
+            if 'NUMBER' in df.columns and 'ELAPSED' in df.columns:
+                df = df.sort_values(['ELAPSED'])
                 
                 # Recalculate lap numbers based on position in sequence
                 for driver in df['NUMBER'].unique():
@@ -216,19 +222,19 @@ class DataCleaner:
             DataFrame with calculated sector times
         """
         sector_cols = ['S1_SECONDS', 'S2_SECONDS', 'S3_SECONDS']
-        lap_time_col = ' LAP_TIME' if ' LAP_TIME' in df.columns else 'LAP_TIME'
+        lap_time_col = 'LAP_TIME'
         
         # Check if we have the necessary columns
-        has_sectors = all(col in df.columns or f' {col}' in df.columns for col in sector_cols)
+        has_sectors = all(col in df.columns for col in sector_cols)
         has_lap_time = lap_time_col in df.columns
         
         if not (has_sectors and has_lap_time):
             return df
         
-        # Normalize column names (some have leading space)
-        s1_col = ' S1_SECONDS' if ' S1_SECONDS' in df.columns else 'S1_SECONDS'
-        s2_col = ' S2_SECONDS' if ' S2_SECONDS' in df.columns else 'S2_SECONDS'
-        s3_col = ' S3_SECONDS' if ' S3_SECONDS' in df.columns else 'S3_SECONDS'
+        # Column names are now cleaned (no leading spaces)
+        s1_col = 'S1_SECONDS'
+        s2_col = 'S2_SECONDS'
+        s3_col = 'S3_SECONDS'
         
         # Calculate missing S3 if S1 and S2 exist
         s3_missing = df[s3_col].isna()
@@ -263,8 +269,8 @@ class DataCleaner:
             # Convert PIT_TIME to numeric, handling string values
             pit_time_numeric = pd.to_numeric(df['PIT_TIME'], errors='coerce')
             df['is_pit_lap'] = pit_time_numeric.notna() & (pit_time_numeric > 0)
-        elif ' CROSSING_FINISH_LINE_IN_PIT' in df.columns:
-            df['is_pit_lap'] = df[' CROSSING_FINISH_LINE_IN_PIT'] == 'P'
+        elif 'CROSSING_FINISH_LINE_IN_PIT' in df.columns:
+            df['is_pit_lap'] = df['CROSSING_FINISH_LINE_IN_PIT'] == 'P'
         
         pit_count = df['is_pit_lap'].sum()
         if pit_count > 0:

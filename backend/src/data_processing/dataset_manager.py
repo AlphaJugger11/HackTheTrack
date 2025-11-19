@@ -107,6 +107,8 @@ class DatasetManager:
                 
                 if analysis_file:
                     df = pd.read_csv(analysis_file[0], sep=';')
+                    # Strip whitespace from column names for consistency
+                    df.columns = df.columns.str.strip()
                     logger.info(f"Loaded {len(df)} laps for {track} Race {race_num}")
                     return df
             
@@ -120,6 +122,8 @@ class DatasetManager:
     def _merge_lap_data(self, lap_times: pd.DataFrame, analysis: pd.DataFrame) -> pd.DataFrame:
         """Merge lap time events with sector analysis data."""
         # Analysis data has the sector times we need
+        # Strip whitespace from column names for consistency
+        analysis.columns = analysis.columns.str.strip()
         return analysis
     
     def load_telemetry_data(self, track: str, race_num: int, lap: Optional[int] = None) -> Optional[pd.DataFrame]:

@@ -187,7 +187,7 @@ class StrategyEngine:
         
         # Estimate how many positions lost based on pit time and average lap time
         if not lap_times.empty:
-            lap_time_col = ' LAP_TIME' if ' LAP_TIME' in lap_times.columns else 'LAP_TIME'
+            lap_time_col = 'LAP_TIME'
             avg_lap_time = lap_times[lap_time_col].mean()
             
             if avg_lap_time > 0:
@@ -267,8 +267,8 @@ class StrategyEngine:
         Returns:
             Complete strategy recommendation
         """
-        # Get lap times
-        lap_time_col = ' LAP_TIME' if ' LAP_TIME' in lap_data.columns else 'LAP_TIME'
+        # Get lap times (columns are now cleaned, no leading spaces)
+        lap_time_col = 'LAP_TIME'
         lap_times = lap_data[lap_time_col].tolist() if lap_time_col in lap_data.columns else []
         
         # Identify pit laps
