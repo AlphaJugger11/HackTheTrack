@@ -7,7 +7,7 @@ print(BASE_DIR)
 API_HOST = "0.0.0.0"
 API_PORT = 8000
 print(os.listdir(DATASET_DIR))
-CACHE_MAX_SIZE_MB = 500  # Optimized for 8GB RAM systems
+CACHE_MAX_SIZE_MB = 256  # Optimized for 8GB RAM systems
 
 TRACKS = [
     "barber",
