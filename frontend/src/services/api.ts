@@ -5,7 +5,6 @@ import type {
   LapData,
   TelemetryPoint,
   StrategyRecommendation,
-  RacingLineData,
 } from '../types/race.types';
 
 const API_BASE_URL = 'http://localhost:8000';

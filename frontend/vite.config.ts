@@ -16,4 +16,16 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'plotly': ['react-plotly.js', 'plotly.js'],
+          'vendor': ['react', 'react-dom'],
+          'd3': ['d3'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
 })

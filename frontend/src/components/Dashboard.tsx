@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRace } from "../context/RaceContext";
 import { raceApi } from "../services/api";
 import { RaceSelector } from "./RaceSelector";
@@ -7,6 +7,8 @@ import { SectorComparisonChart } from "./SectorComparisonChart";
 import { StrategyPanel } from "./StrategyPanel";
 import { TelemetryDashboard } from "./TelemetryDashboard";
 import { LapSelector } from "./LapSelector";
+import { LoadingSkeleton } from "./LoadingSkeleton";
+import { Tooltip } from "./Tooltip";
 import type { LapData } from "../types/race.types";
 
 export function Dashboard() {
@@ -15,18 +17,13 @@ export function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [drivers, setDrivers] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (state.track && state.raceNum) {
-      // Debounce race data loading to avoid multiple rapid calls
-      const timer = setTimeout(() => {
-        loadRaceData();
-      }, 300);
+  // Memoized calculations
+  const maxLap = useMemo(() => {
+    if (lapData.length === 0) return 0;
+    return Math.max(...lapData.map((l) => l.LAP_NUMBER || 0));
+  }, [lapData]);
 
-      return () => clearTimeout(timer);
-    }
-  }, [state.track, state.raceNum]);
-
-  const loadRaceData = async () => {
+  const loadRaceData = useCallback(async () => {
     if (!state.track || !state.raceNum) return;
 
     try {
@@ -38,18 +35,58 @@ export function Dashboard() {
 
       setLapData(laps);
       setDrivers(driverList);
-
-      // Set total laps
-      if (laps.length > 0) {
-        const maxLap = Math.max(...laps.map((l) => l.LAP_NUMBER || 0));
-        // Dispatch to context if needed
-      }
     } catch (error) {
       console.error("Failed to load race data:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [state.track, state.raceNum]);
+
+  useEffect(() => {
+    if (state.track && state.raceNum) {
+      // Debounce race data loading to avoid multiple rapid calls
+      const timer = setTimeout(() => {
+        loadRaceData();
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [state.track, state.raceNum, loadRaceData]);
+
+  // Keyboard shortcuts for lap navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!state.selectedDriver) return;
+
+      switch (e.key) {
+        case "ArrowLeft":
+          if (state.currentLap > 1) {
+            dispatch({
+              type: "SET_CURRENT_LAP",
+              payload: state.currentLap - 1,
+            });
+          }
+          break;
+        case "ArrowRight":
+          if (state.currentLap < maxLap) {
+            dispatch({
+              type: "SET_CURRENT_LAP",
+              payload: state.currentLap + 1,
+            });
+          }
+          break;
+        case "Home":
+          dispatch({ type: "SET_CURRENT_LAP", payload: 1 });
+          break;
+        case "End":
+          dispatch({ type: "SET_CURRENT_LAP", payload: maxLap });
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [state.selectedDriver, state.currentLap, maxLap, dispatch]);
 
   return (
     <div className="min-h-screen bg-racing-dark text-white">
@@ -88,11 +125,7 @@ export function Dashboard() {
                   </div>
                   <div>
                     <span className="text-gray-400">Total Laps:</span>
-                    <span className="ml-2 text-white">
-                      {lapData.length > 0
-                        ? Math.max(...lapData.map((l) => l.LAP_NUMBER || 0))
-                        : "-"}
-                    </span>
+                    <span className="ml-2 text-white">{maxLap || "-"}</span>
                   </div>
                 </div>
               </div>
@@ -111,11 +144,7 @@ export function Dashboard() {
                 </p>
               </div>
             ) : loading ? (
-              <div className="bg-racing-gray p-12 rounded-lg text-center">
-                <div className="text-xl text-gray-400">
-                  Loading race data...
-                </div>
-              </div>
+              <LoadingSkeleton />
             ) : (
               <div className="space-y-6">
                 {/* Race Data Summary */}
@@ -127,9 +156,7 @@ export function Dashboard() {
                     <div className="bg-gray-800 p-4 rounded">
                       <div className="text-gray-400 text-sm">Total Laps</div>
                       <div className="text-2xl font-bold text-white">
-                        {lapData.length > 0
-                          ? Math.max(...lapData.map((l) => l.LAP_NUMBER || 0))
-                          : 0}
+                        {maxLap}
                       </div>
                     </div>
                     <div className="bg-gray-800 p-4 rounded">
@@ -150,7 +177,9 @@ export function Dashboard() {
                 {/* Driver List */}
                 <div className="bg-racing-gray p-6 rounded-lg">
                   <h3 className="text-xl font-semibold mb-4">
-                    Drivers
+                    <Tooltip content="Select a driver to view detailed analytics">
+                      <span>Drivers</span>
+                    </Tooltip>
                     {state.selectedDriver && (
                       <span className="ml-3 text-sm text-gray-400">
                         Selected: #{state.selectedDriver}
@@ -182,14 +211,13 @@ export function Dashboard() {
 
                 {/* Lap Selector - Only show when driver selected */}
                 {state.selectedDriver && lapData.length > 0 && (
-                  <LapSelector
-                    totalLaps={Math.max(
-                      ...lapData.map(
-                        (l) =>
-                          l.LAP_NUMBER || l[" LAP_NUMBER" as keyof LapData] || 0
-                      )
-                    )}
-                  />
+                  <div>
+                    <LapSelector totalLaps={maxLap} />
+                    <div className="mt-2 text-sm text-gray-400 text-center">
+                      Use ← → arrow keys to navigate laps, Home/End for
+                      first/last lap
+                    </div>
+                  </div>
                 )}
 
                 {/* Telemetry Dashboard - Only show when driver selected */}
