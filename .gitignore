@@ -246,3 +246,6 @@ Thumbs.db
 
 nextPrompt.md
 docs/session_summary.md
+
+*.pem
+HT_KP.pem
