@@ -15,6 +15,7 @@ import { TimelineControl } from "./TimelineControl";
 import { ExportMenu } from "./ExportMenu";
 import { DriverComparison } from "./DriverComparison";
 import { ComparisonSelector } from "./ComparisonSelector";
+import { TrackInfo } from "./TrackInfo";
 import type { LapData } from "../types/race.types";
 
 export function Dashboard() {
@@ -230,6 +231,9 @@ export function Dashboard() {
                     </div>
                   </div>
                 </div>
+
+                {/* Track Information */}
+                <TrackInfo track={state.track!} raceNum={state.raceNum!} />
 
                 {/* Timing Tower */}
                 <TimingTower

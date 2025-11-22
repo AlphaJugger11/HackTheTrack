@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 import logging
 import pandas as pd
+from pathlib import Path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -140,6 +142,61 @@ async def get_drivers(track: str, race_num: int):
         return {"drivers": unique_drivers}
     except Exception as e:
         logger.error(f"Error loading drivers for {track} Race {race_num}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/maps/{track}")
+async def get_track_map(track: str):
+    """Get track map as image for specific track."""
+    try:
+        from config import DATASET_DIR
+        import fitz
+        from io import BytesIO
+        from fastapi.responses import StreamingResponse
+        
+        # Map track names to PDF filenames
+        track_map_files = {
+            "barber": "Barber_Circuit_Map.pdf",
+            "COTA": "COTA_Circuit_Map.pdf",
+            "Road America": "Road_America_Map.pdf",
+            "Sebring": "Sebring_Track_Sector_Map.pdf",
+            "Sonoma": "Sonoma_Map.pdf",
+            "VIR": "VIR_map.pdf"
+        }
+        
+        if track not in track_map_files:
+            raise HTTPException(status_code=404, detail=f"Track map not found for {track}")
+        
+        map_path = DATASET_DIR / "Maps" / track_map_files[track]
+        
+        if not map_path.exists():
+            logger.error(f"Track map file not found: {map_path}")
+            raise HTTPException(status_code=404, detail=f"Track map file not found")
+        
+        # Open PDF and convert first page to image
+        pdf_document = fitz.open(str(map_path))
+        page = pdf_document[0]
+        
+        # Render page to image at high resolution
+        mat = fitz.Matrix(2.0, 2.0)
+        pix = page.get_pixmap(matrix=mat)
+        
+        # Convert to PNG bytes
+        img_byte_arr = BytesIO(pix.tobytes("png"))
+        img_byte_arr.seek(0)
+        
+        pdf_document.close()
+        
+        return StreamingResponse(
+            img_byte_arr,
+            media_type="image/png",
+            headers={
+                "Cache-Control": "public, max-age=86400"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving track map for {track}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/races/{track}/{race_num}/telemetry/{lap}")
