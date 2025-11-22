@@ -1,4 +1,4 @@
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useCallback } from "react";
 import Plot from "react-plotly.js";
 import { raceApi } from "../services/api";
 
@@ -19,11 +19,7 @@ export const TelemetryDashboard = memo(
     const [telemetry, setTelemetry] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-      loadTelemetry();
-    }, [track, raceNum, driver, currentLap]);
-
-    const loadTelemetry = async () => {
+    const loadTelemetry = useCallback(async () => {
       try {
         setLoading(true);
         const data = await raceApi.getTelemetry(track, raceNum, currentLap, 10);
@@ -34,7 +30,11 @@ export const TelemetryDashboard = memo(
       } finally {
         setLoading(false);
       }
-    };
+    }, [track, raceNum, driver, currentLap]);
+
+    useEffect(() => {
+      loadTelemetry();
+    }, [loadTelemetry]);
 
     if (loading) {
       return (

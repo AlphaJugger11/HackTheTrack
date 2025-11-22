@@ -9,6 +9,9 @@ import { TelemetryDashboard } from "./TelemetryDashboard";
 import { LapSelector } from "./LapSelector";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { Tooltip } from "./Tooltip";
+import { RaceStatusBar } from "./RaceStatusBar";
+import { TimingTower } from "./TimingTower";
+import { TimelineControl } from "./TimelineControl";
 import type { LapData } from "../types/race.types";
 
 export function Dashboard() {
@@ -89,7 +92,7 @@ export function Dashboard() {
   }, [state.selectedDriver, state.currentLap, maxLap, dispatch]);
 
   return (
-    <div className="min-h-screen bg-racing-dark text-white">
+    <div className="min-h-screen bg-racing-dark text-white flex flex-col">
       {/* Header */}
       <header className="bg-racing-gray border-b border-gray-800">
         <div className="container mx-auto px-4 py-4">
@@ -100,8 +103,19 @@ export function Dashboard() {
         </div>
       </header>
 
+      {/* Race Status Bar - Only show when race is selected */}
+      {state.track && state.raceNum && maxLap > 0 && (
+        <RaceStatusBar
+          track={state.track}
+          raceNum={state.raceNum}
+          currentLap={state.currentLap || 1}
+          totalLaps={maxLap}
+          selectedDriver={state.selectedDriver}
+        />
+      )}
+
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar - Race Selection */}
           <div className="lg:col-span-1">
@@ -173,6 +187,19 @@ export function Dashboard() {
                     </div>
                   </div>
                 </div>
+
+                {/* Timing Tower */}
+                <TimingTower
+                  lapData={lapData}
+                  currentLap={state.currentLap || 1}
+                  selectedDriver={state.selectedDriver}
+                  onDriverSelect={(driver) => {
+                    dispatch({
+                      type: "SELECT_DRIVER",
+                      payload: state.selectedDriver === driver ? null : driver,
+                    });
+                  }}
+                />
 
                 {/* Driver List */}
                 <div className="bg-racing-gray p-6 rounded-lg">
@@ -279,6 +306,17 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Timeline Control - Only show when race is selected */}
+      {state.track && state.raceNum && maxLap > 0 && (
+        <TimelineControl
+          currentLap={state.currentLap || 1}
+          totalLaps={maxLap}
+          onLapChange={(lap) =>
+            dispatch({ type: "SET_CURRENT_LAP", payload: lap })
+          }
+        />
+      )}
     </div>
   );
 }
