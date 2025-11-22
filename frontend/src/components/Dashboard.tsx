@@ -12,6 +12,9 @@ import { Tooltip } from "./Tooltip";
 import { RaceStatusBar } from "./RaceStatusBar";
 import { TimingTower } from "./TimingTower";
 import { TimelineControl } from "./TimelineControl";
+import { ExportMenu } from "./ExportMenu";
+import { DriverComparison } from "./DriverComparison";
+import { ComparisonSelector } from "./ComparisonSelector";
 import type { LapData } from "../types/race.types";
 
 export function Dashboard() {
@@ -19,6 +22,11 @@ export function Dashboard() {
   const [lapData, setLapData] = useState<LapData[]>([]);
   const [loading, setLoading] = useState(false);
   const [drivers, setDrivers] = useState<string[]>([]);
+  const [showComparisonSelector, setShowComparisonSelector] = useState(false);
+  const [comparisonDrivers, setComparisonDrivers] = useState<{
+    driver1: string;
+    driver2: string;
+  } | null>(null);
 
   // Memoized calculations
   const maxLap = useMemo(() => {
@@ -96,10 +104,45 @@ export function Dashboard() {
       {/* Header */}
       <header className="bg-racing-gray border-b border-gray-800">
         <div className="container mx-auto px-4 py-4">
-          <h1 className="text-3xl font-bold">GR Cup Analytics Platform</h1>
-          <p className="text-gray-400 text-sm">
-            Real-time race analytics and strategy
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">GR Cup Analytics Platform</h1>
+              <p className="text-gray-400 text-sm">
+                Real-time race analytics and strategy
+              </p>
+            </div>
+            {/* Action Buttons - Only show when race is selected */}
+            {state.track && state.raceNum && lapData.length > 0 && (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowComparisonSelector(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-racing-yellow hover:bg-yellow-600 text-black rounded-lg transition-colors font-semibold"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                  Compare Drivers
+                </button>
+                <ExportMenu
+                  lapData={lapData}
+                  track={state.track}
+                  raceNum={state.raceNum}
+                  driver={state.selectedDriver}
+                  currentLap={state.currentLap}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -301,6 +344,30 @@ export function Dashboard() {
                     />
                   </div>
                 )}
+
+                {/* Driver Comparison - Show when comparison is active */}
+                {comparisonDrivers && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-semibold">
+                        Driver Comparison
+                      </h3>
+                      <button
+                        onClick={() => setComparisonDrivers(null)}
+                        className="text-sm text-gray-400 hover:text-white transition-colors"
+                      >
+                        Close Comparison
+                      </button>
+                    </div>
+                    <DriverComparison
+                      lapData={lapData}
+                      driver1={comparisonDrivers.driver1}
+                      driver2={comparisonDrivers.driver2}
+                      track={state.track!}
+                      raceNum={state.raceNum!}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -315,6 +382,18 @@ export function Dashboard() {
           onLapChange={(lap) =>
             dispatch({ type: "SET_CURRENT_LAP", payload: lap })
           }
+        />
+      )}
+
+      {/* Comparison Selector Modal */}
+      {showComparisonSelector && (
+        <ComparisonSelector
+          drivers={drivers}
+          onCompare={(driver1, driver2) => {
+            setComparisonDrivers({ driver1, driver2 });
+            setShowComparisonSelector(false);
+          }}
+          onClose={() => setShowComparisonSelector(false)}
         />
       )}
     </div>

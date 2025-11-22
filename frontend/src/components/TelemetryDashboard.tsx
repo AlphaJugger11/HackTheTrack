@@ -1,4 +1,4 @@
-import { useEffect, useState, memo, useCallback } from "react";
+import { useEffect, useState, memo } from "react";
 import Plot from "react-plotly.js";
 import { raceApi } from "../services/api";
 
@@ -19,22 +19,42 @@ export const TelemetryDashboard = memo(
     const [telemetry, setTelemetry] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const loadTelemetry = useCallback(async () => {
-      try {
-        setLoading(true);
-        const data = await raceApi.getTelemetry(track, raceNum, currentLap, 10);
-        setTelemetry(data);
-      } catch (error) {
-        console.error("Failed to load telemetry:", error);
-        setTelemetry([]);
-      } finally {
-        setLoading(false);
-      }
-    }, [track, raceNum, driver, currentLap]);
-
     useEffect(() => {
+      let cancelled = false;
+
+      const loadTelemetry = async () => {
+        try {
+          setLoading(true);
+          const data = await raceApi.getTelemetry(
+            track,
+            raceNum,
+            currentLap,
+            10
+          );
+
+          // Only update state if the request wasn't cancelled
+          if (!cancelled) {
+            setTelemetry(data);
+          }
+        } catch (error) {
+          console.error("Failed to load telemetry:", error);
+          if (!cancelled) {
+            setTelemetry([]);
+          }
+        } finally {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        }
+      };
+
       loadTelemetry();
-    }, [loadTelemetry]);
+
+      // Cleanup function to cancel the request if component unmounts or deps change
+      return () => {
+        cancelled = true;
+      };
+    }, [track, raceNum, currentLap]);
 
     if (loading) {
       return (
