@@ -32,8 +32,22 @@ export const TimingTower = memo(
 
       if (currentLapData.length === 0) return [];
 
-      // Sort by lap time (fastest first)
-      const sorted = [...currentLapData].sort((a, b) => {
+      // Deduplicate by driver - keep only the best lap time for each driver
+      const driverBestLaps = new Map<string, (typeof currentLapData)[0]>();
+      currentLapData.forEach((lap) => {
+        const driverNum = String(lap.NUMBER || "");
+        const existing = driverBestLaps.get(driverNum);
+
+        if (
+          !existing ||
+          (lap.LAP_TIME || 999999) < (existing.LAP_TIME || 999999)
+        ) {
+          driverBestLaps.set(driverNum, lap);
+        }
+      });
+
+      // Convert to array and sort by lap time (fastest first)
+      const sorted = Array.from(driverBestLaps.values()).sort((a, b) => {
         const timeA = a.LAP_TIME || 999999;
         const timeB = b.LAP_TIME || 999999;
         return timeA - timeB;

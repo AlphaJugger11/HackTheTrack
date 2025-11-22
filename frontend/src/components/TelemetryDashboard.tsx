@@ -1,4 +1,4 @@
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useRef } from "react";
 import Plot from "react-plotly.js";
 import { raceApi } from "../services/api";
 
@@ -18,9 +18,11 @@ export const TelemetryDashboard = memo(
   }: TelemetryDashboardProps) {
     const [telemetry, setTelemetry] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const requestIdRef = useRef(0);
 
     useEffect(() => {
-      let cancelled = false;
+      // Increment request ID to track the latest request
+      const currentRequestId = ++requestIdRef.current;
 
       const loadTelemetry = async () => {
         try {
@@ -32,28 +34,21 @@ export const TelemetryDashboard = memo(
             10
           );
 
-          // Only update state if the request wasn't cancelled
-          if (!cancelled) {
+          // Only update if this is still the latest request
+          if (currentRequestId === requestIdRef.current) {
             setTelemetry(data);
+            setLoading(false);
           }
         } catch (error) {
           console.error("Failed to load telemetry:", error);
-          if (!cancelled) {
+          if (currentRequestId === requestIdRef.current) {
             setTelemetry([]);
-          }
-        } finally {
-          if (!cancelled) {
             setLoading(false);
           }
         }
       };
 
       loadTelemetry();
-
-      // Cleanup function to cancel the request if component unmounts or deps change
-      return () => {
-        cancelled = true;
-      };
     }, [track, raceNum, currentLap]);
 
     if (loading) {

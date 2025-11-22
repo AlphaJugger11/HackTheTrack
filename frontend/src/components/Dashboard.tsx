@@ -298,6 +298,7 @@ export function Dashboard() {
                       {state.currentLap || 1}
                     </h3>
                     <TelemetryDashboard
+                      key={`${state.track}-${state.raceNum}-${state.selectedDriver}-${state.currentLap}`}
                       track={state.track!}
                       raceNum={state.raceNum!}
                       driver={state.selectedDriver}

@@ -23,7 +23,7 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173","http://localhost:5174"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -113,6 +113,33 @@ async def get_lap_data(track: str, race_num: int):
         return cleaned_data.replace({float('nan'): None}).to_dict('records')
     except Exception as e:
         logger.error(f"Error loading lap data for {track} Race {race_num}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/races/{track}/{race_num}/drivers")
+async def get_drivers(track: str, race_num: int):
+    """Get unique list of drivers for specific race."""
+    try:
+        cache_key = f"{track}_{race_num}_drivers"
+        cached = data_cache.get(cache_key)
+        
+        if cached is not None:
+            return {"drivers": cached}
+        
+        lap_data = dataset_manager.load_lap_data(track, race_num)
+        if lap_data is None:
+            raise HTTPException(status_code=404, detail=f"Lap data not found for {track} Race {race_num}")
+        
+        cleaned_data = data_cleaner.clean_lap_data(lap_data)
+        
+        # Get unique drivers and sort them
+        unique_drivers = sorted(cleaned_data['NUMBER'].unique().tolist(), key=lambda x: int(x) if x.isdigit() else 999)
+        
+        # Cache the driver list
+        data_cache.put(cache_key, unique_drivers)
+        
+        return {"drivers": unique_drivers}
+    except Exception as e:
+        logger.error(f"Error loading drivers for {track} Race {race_num}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/races/{track}/{race_num}/telemetry/{lap}")
