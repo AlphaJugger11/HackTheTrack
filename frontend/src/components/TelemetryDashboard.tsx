@@ -52,8 +52,18 @@ export const TelemetryDashboard = memo(
       );
     }
 
-    // Extract data
-    const timestamps = telemetry.map((_, i) => i);
+    // Extract data with actual elapsed time
+    const elapsedTimes = telemetry.map(
+      (d: any) => d.elapsed_time || d.Elapsed_Time || 0
+    );
+    const hasElapsedTime = elapsedTimes.some((t) => t > 0);
+
+    // Use elapsed time if available, otherwise use index-based timestamps
+    const timestamps = hasElapsedTime
+      ? elapsedTimes
+      : telemetry.map((_, i) => i * 0.1);
+    const timeLabel = hasElapsedTime ? "Elapsed Time (s)" : "Time (relative)";
+
     const speeds = telemetry.map((d: any) => d.speed || d.Speed || 0);
     const throttle = telemetry.map((d: any) => d.ath || 0);
     const brakeFront = telemetry.map((d: any) => d.pbrake_f || 0);
@@ -63,6 +73,11 @@ export const TelemetryDashboard = memo(
     const steering = telemetry.map(
       (d: any) => d.Steering_Angle || d.steering_angle || 0
     );
+
+    // Calculate lap duration
+    const lapDuration = hasElapsedTime
+      ? Math.max(...elapsedTimes).toFixed(2)
+      : "N/A";
 
     return (
       <div className="space-y-6">
@@ -88,9 +103,9 @@ export const TelemetryDashboard = memo(
               plot_bgcolor: "rgba(0,0,0,0)",
               font: { color: "#fff" },
               xaxis: {
-                title: "Time",
+                title: timeLabel,
                 gridcolor: "#374151",
-                showticklabels: false,
+                showticklabels: true,
               },
               yaxis: {
                 title: "Speed (km/h)",
@@ -138,9 +153,9 @@ export const TelemetryDashboard = memo(
               plot_bgcolor: "rgba(0,0,0,0)",
               font: { color: "#fff" },
               xaxis: {
-                title: "Time",
+                title: timeLabel,
                 gridcolor: "#374151",
-                showticklabels: false,
+                showticklabels: true,
               },
               yaxis: {
                 title: "Input %",
@@ -188,9 +203,9 @@ export const TelemetryDashboard = memo(
               font: { color: "#fff" },
 
               xaxis: {
-                title: "Time",
+                title: timeLabel,
                 gridcolor: "#374151",
-                showticklabels: false,
+                showticklabels: true,
               },
               yaxis: {
                 title: "G-Force",
@@ -232,9 +247,9 @@ export const TelemetryDashboard = memo(
                 plot_bgcolor: "rgba(0,0,0,0)",
                 font: { color: "#fff" },
                 xaxis: {
-                  title: "Time",
+                  title: timeLabel,
                   gridcolor: "#374151",
-                  showticklabels: false,
+                  showticklabels: true,
                 },
                 yaxis: {
                   title: "Gear",
@@ -270,9 +285,9 @@ export const TelemetryDashboard = memo(
                 plot_bgcolor: "rgba(0,0,0,0)",
                 font: { color: "#fff" },
                 xaxis: {
-                  title: "Time",
+                  title: timeLabel,
                   gridcolor: "#374151",
-                  showticklabels: false,
+                  showticklabels: true,
                 },
                 yaxis: {
                   title: "Angle (deg)",
@@ -290,7 +305,11 @@ export const TelemetryDashboard = memo(
         </div>
 
         {/* Telemetry Stats */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-5 gap-4">
+          <div className="bg-gray-800 p-4 rounded text-center">
+            <div className="text-gray-400 text-sm">Lap Duration</div>
+            <div className="text-2xl font-bold text-white">{lapDuration}s</div>
+          </div>
           <div className="bg-gray-800 p-4 rounded text-center">
             <div className="text-gray-400 text-sm">Max Speed</div>
             <div className="text-2xl font-bold text-racing-green">
