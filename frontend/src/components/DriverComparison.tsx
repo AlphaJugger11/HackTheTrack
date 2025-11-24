@@ -248,7 +248,7 @@ export const DriverComparison = memo(
             data={[
               {
                 x: driver1Laps.map((l) => l.LAP_NUMBER),
-                y: driver1Laps.map((l, i) => {
+                y: driver1Laps.map((l) => {
                   const d2Lap = driver2Laps.find(
                     (d2) => d2.LAP_NUMBER === l.LAP_NUMBER
                   );
@@ -258,7 +258,7 @@ export const DriverComparison = memo(
                 type: "bar",
                 name: "Delta",
                 marker: {
-                  color: driver1Laps.map((l, i) => {
+                  color: driver1Laps.map((l) => {
                     const d2Lap = driver2Laps.find(
                       (d2) => d2.LAP_NUMBER === l.LAP_NUMBER
                     );

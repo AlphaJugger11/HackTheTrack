@@ -248,7 +248,7 @@ Lap Times
 ---------
 ${driverLaps
   .map(
-    (lap, i) =>
+    (lap) =>
       `Lap ${lap.LAP_NUMBER}: ${lap.LAP_TIME?.toFixed(3)}s${lap.is_pit_lap ? " (PIT)" : ""}`
   )
   .join("\n")}
