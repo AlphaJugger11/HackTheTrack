@@ -29,6 +29,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:5174",
         "https://hackthetrack-ng02v8vtn-alihussain11242004-6702s-projects.vercel.app",
+        "https://telemetrytrack.vercel.app",
         "https://hackthetrack.vercel.app",
         "https://*.vercel.app"
     ],
