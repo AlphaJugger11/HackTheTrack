@@ -14,9 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY src ./src
 COPY run.py .
+COPY download_dataset.py .
 
-# Copy demo dataset (subset for deployment)
-COPY dataset ./dataset
+# Dataset will be downloaded from S3 on startup (see run.py)
 
 # Expose port
 EXPOSE 8000
