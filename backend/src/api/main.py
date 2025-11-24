@@ -200,15 +200,16 @@ async def get_track_map(track: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/races/{track}/{race_num}/telemetry/{lap}")
-async def get_telemetry_data(track: str, race_num: int, lap: int, sample_rate: int = 20):
+async def get_telemetry_data(track: str, race_num: int, lap: int, driver: str = None, sample_rate: int = 20):
     """
-    Get telemetry data for specific lap.
+    Get telemetry data for specific lap and driver.
     
     Args:
+        driver: Driver number to filter telemetry (optional)
         sample_rate: Return every Nth point (default 20 for 20x reduction)
     """
     try:
-        cache_key = f"{track}_{race_num}_telemetry_lap_{lap}_sample_{sample_rate}"
+        cache_key = f"{track}_{race_num}_telemetry_lap_{lap}_driver_{driver}_sample_{sample_rate}"
         cached = data_cache.get(cache_key)
         
         if cached is not None:
@@ -220,6 +221,44 @@ async def get_telemetry_data(track: str, race_num: int, lap: int, sample_rate: i
             raise HTTPException(status_code=404, detail=f"Telemetry data not found for lap {lap}")
         
         cleaned_telemetry = data_cleaner.clean_telemetry_data(telemetry)
+        
+        # Filter by driver if specified
+        if driver is not None:
+            # Try both string and int comparison for driver number
+            driver_str = str(driver)
+            try:
+                driver_int = int(driver)
+            except:
+                driver_int = None
+            
+            logger.info(f"Filtering telemetry for driver {driver_str}, lap {lap}")
+            logger.info(f"Available columns: {cleaned_telemetry.columns.tolist()}")
+            logger.info(f"Rows before filter: {len(cleaned_telemetry)}")
+            
+            if 'vehicle_number' in cleaned_telemetry.columns:
+                # Try int comparison first, then string
+                if driver_int is not None:
+                    cleaned_telemetry = cleaned_telemetry[cleaned_telemetry['vehicle_number'] == driver_int]
+                if cleaned_telemetry.empty and driver_str:
+                    cleaned_telemetry = cleaned_telemetry[cleaned_telemetry['vehicle_number'] == driver_str]
+                logger.info(f"Filtered by vehicle_number, rows after: {len(cleaned_telemetry)}")
+            elif 'NUMBER' in cleaned_telemetry.columns:
+                if driver_int is not None:
+                    cleaned_telemetry = cleaned_telemetry[cleaned_telemetry['NUMBER'] == driver_int]
+                if cleaned_telemetry.empty and driver_str:
+                    cleaned_telemetry = cleaned_telemetry[cleaned_telemetry['NUMBER'] == driver_str]
+                logger.info(f"Filtered by NUMBER, rows after: {len(cleaned_telemetry)}")
+            elif 'number' in cleaned_telemetry.columns:
+                if driver_int is not None:
+                    cleaned_telemetry = cleaned_telemetry[cleaned_telemetry['number'] == driver_int]
+                if cleaned_telemetry.empty and driver_str:
+                    cleaned_telemetry = cleaned_telemetry[cleaned_telemetry['number'] == driver_str]
+                logger.info(f"Filtered by number, rows after: {len(cleaned_telemetry)}")
+            else:
+                logger.warning(f"No driver column found in telemetry data!")
+            
+            if cleaned_telemetry.empty:
+                raise HTTPException(status_code=404, detail=f"No telemetry data found for driver {driver} on lap {lap}")
         
         # Sample data to reduce size (every Nth point)
         

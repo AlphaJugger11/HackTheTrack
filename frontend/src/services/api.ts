@@ -7,7 +7,7 @@ import type {
   StrategyRecommendation,
 } from '../types/race.types';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -34,11 +34,16 @@ export const raceApi = {
     track: string,
     raceNum: number,
     lap: number,
-    sampleRate: number = 20
+    sampleRate: number = 20,
+    driver?: string
   ): Promise<TelemetryPoint[]> {
+    const params: any = { sample_rate: sampleRate };
+    if (driver) {
+      params.driver = driver;
+    }
     const response = await api.get<TelemetryPoint[]>(
       `/api/races/${track}/${raceNum}/telemetry/${lap}`,
-      { params: { sample_rate: sampleRate } }
+      { params }
     );
     return response.data;
   },

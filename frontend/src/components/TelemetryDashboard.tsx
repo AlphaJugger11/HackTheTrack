@@ -31,7 +31,8 @@ export const TelemetryDashboard = memo(
             track,
             raceNum,
             currentLap,
-            10
+            10,
+            driver
           );
 
           // Only update if this is still the latest request
@@ -49,7 +50,7 @@ export const TelemetryDashboard = memo(
       };
 
       loadTelemetry();
-    }, [track, raceNum, currentLap]);
+    }, [track, raceNum, driver, currentLap]);
 
     if (loading) {
       return (

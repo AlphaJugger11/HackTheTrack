@@ -144,6 +144,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# But keep example env files
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -249,3 +254,38 @@ docs/session_summary.md
 
 *.pem
 HT_KP.pem
+
+# Temporary documentation and status files
+COMPLETED_OPTIMIZATIONS_SUMMARY.md
+DEPLOYMENT_SUMMARY.md
+DRIVER_COMPARISON_ADDED.md
+EXPORT_FEATURE_ADDED.md
+FINAL_PROJECT_STATUS.md
+FIXES_APPLIED.md
+FRONTEND_OPTIMIZATIONS.md
+IMPLEMENTATION_STATUS.md
+NEW_COMPONENTS_ADDED.md
+OPTIMIZATION_CHECKLIST.md
+OPTIMIZATIONS_APPLIED.md
+README_OPTIMIZATIONS.md
+STATUS.md
+SUMMARY.md
+WORK_COMPLETED.md
+LINKS_AND_URLS.md
+
+# Keep these important docs:
+# README.md
+# DEPLOY_NOW.md
+# RAILWAY_S3_DEPLOYMENT.md
+# DEPLOY_CHECKLIST.md
+# QUICK_START_JUDGES.md
+# SUBMISSION_CHECKLIST.md
+# SUBMISSION_STRATEGY.md
+# carTelemMetaData.md
+# KEYBOARD_SHORTCUTS.md
+
+# Media files (screenshots, temporary images)
+media/*.png
+media/*.jpg
+media/*.jpeg
+media/telem*.png
