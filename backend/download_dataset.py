@@ -26,8 +26,10 @@ def download_dataset_from_s3():
     # Create local directory
     LOCAL_DATASET_DIR.mkdir(parents=True, exist_ok=True)
     
-    # Initialize S3 client (public bucket, no credentials needed)
-    s3 = boto3.client('s3', region_name='us-east-1')
+    # Initialize S3 client with anonymous access (for public buckets)
+    from botocore import UNSIGNED
+    from botocore.config import Config
+    s3 = boto3.client('s3', region_name='us-east-1', config=Config(signature_version=UNSIGNED))
     
     try:
         # List all objects in the bucket
