@@ -26,39 +26,51 @@ def download_dataset_from_s3():
     # Create local directory
     LOCAL_DATASET_DIR.mkdir(parents=True, exist_ok=True)
     
-    # Initialize S3 client with anonymous access (for public buckets)
-    from botocore import UNSIGNED
-    from botocore.config import Config
-    s3 = boto3.client('s3', region_name='us-east-1', config=Config(signature_version=UNSIGNED))
+    # Use direct HTTP downloads instead of boto3 to avoid permission issues
+    import requests
+    
+    # Define the file structure (tracks and their files)
+    tracks = {
+        "COTA": ["2024_COTA_Race1.csv", "2024_COTA_Race2.csv"],
+        "Sebring": ["2024_Sebring_Race1.csv", "2024_Sebring_Race2.csv"],
+        "Road America": ["2024_Road_America_Race1.csv", "2024_Road_America_Race2.csv"],
+        "VIR": ["2024_VIR_Race1.csv", "2024_VIR_Race2.csv"],
+        "Sonoma": ["2024_Sonoma_Race1.csv", "2024_Sonoma_Race2.csv"],
+        "barber": ["2024_barber_Race1.csv", "2024_barber_Race2.csv"],
+        "Maps": [
+            "Barber_Circuit_Map.pdf",
+            "COTA_Circuit_Map.pdf",
+            "Road_America_Map.pdf",
+            "Sebring_Track_Sector_Map.pdf",
+            "Sonoma_Map.pdf",
+            "VIR_map.pdf"
+        ]
+    }
     
     try:
-        # List all objects in the bucket
-        paginator = s3.get_paginator('list_objects_v2')
-        pages = paginator.paginate(Bucket=S3_BUCKET, Prefix=S3_PREFIX)
-        
         file_count = 0
-        for page in pages:
-            if 'Contents' not in page:
-                continue
+        base_url = f"https://{S3_BUCKET}.s3.amazonaws.com/{S3_PREFIX}"
+        
+        for track, files in tracks.items():
+            track_dir = LOCAL_DATASET_DIR / track
+            track_dir.mkdir(parents=True, exist_ok=True)
+            
+            for filename in files:
+                # Construct S3 URL
+                file_url = f"{base_url}{track}/{filename}"
+                local_file = track_dir / filename
                 
-            for obj in page['Contents']:
-                s3_key = obj['Key']
-                
-                # Skip if it's just a folder marker
-                if s3_key.endswith('/'):
-                    continue
-                
-                # Calculate local path
-                relative_path = s3_key[len(S3_PREFIX):]  # Remove 'dataset/' prefix
-                local_file = LOCAL_DATASET_DIR / relative_path
-                
-                # Create parent directories
-                local_file.parent.mkdir(parents=True, exist_ok=True)
+                logger.info(f"Downloading {file_url} -> {local_file}")
                 
                 # Download file
-                logger.info(f"Downloading {s3_key} -> {local_file}")
-                s3.download_file(S3_BUCKET, s3_key, str(local_file))
-                file_count += 1
+                response = requests.get(file_url, stream=True)
+                if response.status_code == 200:
+                    with open(local_file, 'wb') as f:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            f.write(chunk)
+                    file_count += 1
+                else:
+                    logger.warning(f"Failed to download {file_url}: HTTP {response.status_code}")
         
         logger.info(f"Successfully downloaded {file_count} files from S3")
         

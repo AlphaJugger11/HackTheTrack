@@ -317,6 +317,10 @@ HackTheTrack/
 - GR Cup Series for the racing data
 - The open-source community for excellent tools and libraries
 
+## Note
+
+- In the telemetry dataset used, due to the api initially made it did not sort the telemetry by driver and lap separately although the intended purpose should be this instead it just checks by lap number and shows the data although it should first sort by driver and then by data but because I overlooked it and later during submission I was checking it and found out so couldn't fix it in that time duration
+
 ## License
 
 This project was developed for the Hack the Track hackathon.
